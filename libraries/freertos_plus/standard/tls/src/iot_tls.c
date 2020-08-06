@@ -878,7 +878,19 @@ BaseType_t TLS_Connect( void * pvContext )
         mbedtls_ssl_conf_ca_chain( &pxCtx->xMbedSslConfig, &pxCtx->xMbedX509CA, NULL );
 
         /* Configure the SSL context for the device credentials. */
-        xResult = prvInitializeClientCredential( pxCtx );
+    	{
+    		/* HALTER MOD START
+    		 * We don't always need client credentials, (e.g. when connecting to our discovery
+    		 * service to get them in the first place), so don't fail TLS_Connect just because
+    		 * we don't have them.
+    		 */
+    		int client_cred_result = prvInitializeClientCredential( pxCtx );
+    		if ( client_cred_result != 0 ) {
+    			TLS_PRINT(("Failed to load client cert, %d\n", client_cred_result));
+    		}
+    		/* HALTER MOD END */
+    	}
+
     }
 
     if( ( 0 == xResult ) && ( NULL != pxCtx->ppcAlpnProtocols ) )

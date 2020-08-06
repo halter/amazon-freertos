@@ -563,6 +563,12 @@ MQTTAgentReturnCode_t MQTT_AGENT_Connect( MQTTAgentHandle_t xMQTTHandle,
     {
         pxCredentials = &xCredentials;
 
+        xCredentials.pClientCert = keyCLIENT_CERTIFICATE_PEM;
+        xCredentials.clientCertSize = keyCLIENT_CERTIFICATE_PEM_LENGTH;
+
+        xCredentials.pPrivateKey = keyCLIENT_PRIVATE_KEY_PEM;
+        xCredentials.privateKeySize = keyCLIENT_PRIVATE_KEY_PEM_LENGTH;
+
         /* Set the server certificate. Other credentials are set by the initializer. */
         xCredentials.pRootCa = pxConnectParams->pcCertificate;
         xCredentials.rootCaSize = ( size_t ) pxConnectParams->ulCertificateSize;
