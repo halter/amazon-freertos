@@ -112,7 +112,24 @@ typedef struct
     uint8_t ucPasswordLength; /**< Password length not including NULL termination. */
     WIFISecurity_t xSecurity; /**< Wi-Fi Security. @see WIFISecurity_t. */
     int8_t cChannel;          /**< Channel number. */
+
+    #ifdef HALTER_MODIFIED_ESP_IDF
+    uint32_t ulConnectTimeout;  /**< Max time in ms to wait for connection event */
+    int8_t cMinRssiThreshold;   /**< Min RSSI threshold (in dBm) to connect */
+    #endif
+
 } WIFINetworkParams_t;
+
+#ifdef HALTER_MODIFIED_ESP_IDF
+typedef struct WIFI_AccessPointRecord {
+	int8_t rssi;
+	int8_t channel;
+    uint8_t bssid[wificonfigMAX_BSSID_LEN];
+} WIFI_AccessPointRecord_t;
+
+WIFIReturnCode_t WIFI_GetCurrentAccessPointInfo(WIFI_AccessPointRecord_t * record);
+
+#endif
 
 /**
  * @brief Wi-Fi scan results.

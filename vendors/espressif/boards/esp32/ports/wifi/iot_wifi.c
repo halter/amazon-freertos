@@ -360,6 +360,30 @@ err:
 #define CHECK_VALID_PASSPHRASE_LEN(x) \
         ((x) > 0 && (x) <= wificonfigMAX_PASSPHRASE_LEN)
 
+#ifdef HALTER_MODIFIED_ESP_IDF
+WIFIReturnCode_t WIFI_GetCurrentAccessPointInfo(WIFI_AccessPointRecord_t * record)
+{
+	WIFIReturnCode_t res;
+	if( xSemaphoreTake( xWiFiSem, xSemaphoreWaitTicks ) == pdTRUE )
+	{
+		wifi_ap_record_t esp_record;
+		esp_err_t err = esp_wifi_sta_get_ap_info(&esp_record);
+		if ( err == ESP_OK ) {
+			record->rssi = esp_record.rssi;
+			record->channel = esp_record.primary;
+            memcpy(record->bssid, esp_record.bssid, wificonfigMAX_BSSID_LEN);
+			res = eWiFiSuccess;
+		} else {
+			res = eWiFiFailure;
+		}
+		xSemaphoreGive( xWiFiSem );
+	} else {
+		res = eWiFiTimeout;
+	}
+	return res;
+}
+#endif
+
 WIFIReturnCode_t WIFI_ConnectAP( const WIFINetworkParams_t * const pxNetworkParams )
 {
     wifi_config_t wifi_config = { 0 };
@@ -376,6 +400,11 @@ WIFIReturnCode_t WIFI_ConnectAP( const WIFINetworkParams_t * const pxNetworkPara
         (pxNetworkParams->xSecurity != eWiFiSecurityOpen && !CHECK_VALID_PASSPHRASE_LEN(pxNetworkParams->ucPasswordLength))) {
         return wifi_ret;
     }
+
+#ifdef HALTER_MODIFIED_ESP_IDF
+    configASSERT(pxNetworkParams->cMinRssiThreshold <= 0);
+    wifi_config.sta.threshold.rssi = pxNetworkParams->cMinRssiThreshold;
+#endif
 
     /* Try to acquire the semaphore. */
     if( xSemaphoreTake( xWiFiSem, xSemaphoreWaitTicks ) == pdTRUE )
@@ -435,7 +464,12 @@ WIFIReturnCode_t WIFI_ConnectAP( const WIFINetworkParams_t * const pxNetworkPara
         esp_wifi_connect();
 
         // Wait for wifi connected or disconnected event
-        xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT | DISCONNECTED_BIT, pdTRUE, pdFALSE, portMAX_DELAY);
+        #ifdef HALTER_MODIFIED_ESP_IDF
+            configASSERT(pxNetworkParams->ulConnectTimeout > 0);
+            xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT | DISCONNECTED_BIT, pdTRUE, pdFALSE, pdMS_TO_TICKS(pxNetworkParams->ulConnectTimeout));	        xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT | DISCONNECTED_BIT, pdTRUE, pdFALSE, pdMS_TO_TICKS(pxNetworkParams->ulConnectTimeout));
+        #else
+            xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT | DISCONNECTED_BIT, pdTRUE, pdFALSE, portMAX_DELAY);
+        #endif
         if (wifi_conn_state == true) {
             wifi_ret = eWiFiSuccess;
         }
@@ -492,7 +526,7 @@ WIFIReturnCode_t WIFI_Scan( WIFIScanResult_t * pxBuffer,
     wifi_config_t wifi_config = { 0 };
     esp_err_t ret;
     wifi_mode_t xCurMode;
- 
+
     if (pxBuffer == NULL || ucNumNetworks == 0) {
         return eWiFiFailure;
     }
