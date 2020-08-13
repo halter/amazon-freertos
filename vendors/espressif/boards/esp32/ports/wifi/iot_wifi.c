@@ -466,7 +466,7 @@ WIFIReturnCode_t WIFI_ConnectAP( const WIFINetworkParams_t * const pxNetworkPara
         // Wait for wifi connected or disconnected event
         #ifdef HALTER_MODIFIED_ESP_IDF
             configASSERT(pxNetworkParams->ulConnectTimeout > 0);
-            xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT | DISCONNECTED_BIT, pdTRUE, pdFALSE, pdMS_TO_TICKS(pxNetworkParams->ulConnectTimeout));	        xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT | DISCONNECTED_BIT, pdTRUE, pdFALSE, pdMS_TO_TICKS(pxNetworkParams->ulConnectTimeout));
+            xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT | DISCONNECTED_BIT, pdTRUE, pdFALSE, pdMS_TO_TICKS(pxNetworkParams->ulConnectTimeout));
         #else
             xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT | DISCONNECTED_BIT, pdTRUE, pdFALSE, portMAX_DELAY);
         #endif
