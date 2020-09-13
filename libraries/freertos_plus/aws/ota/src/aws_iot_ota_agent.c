@@ -1995,6 +1995,8 @@ static OTA_Err_t prvValidateUpdateVersion( OTA_FileContext_t * C )
 
     OTA_Err_t xErr = kOTA_Err_Uninitialized;
 
+#define HALTER_MOD_DISABLE_VERSION_CHECK
+#ifndef HALTER_MOD_DISABLE_VERSION_CHECK
     /* Only check for versions if the target is self */
     if( xOTA_Agent.ulServerFileID == 0 )
     {
@@ -2025,6 +2027,7 @@ static OTA_Err_t prvValidateUpdateVersion( OTA_FileContext_t * C )
         }
     }
     else
+#endif /* HALTER_MOD_DISABLE_VERSION_CHECK */
     {
         /* For any other ulServerFileID.*/
         xErr = kOTA_Err_None;
